@@ -1,0 +1,24 @@
+FitMirror Project
+
+Project idea:
+AI virtual try-on platform.
+
+User can:
+- upload clothing image
+- upload their photo
+- AI generates preview of clothes on the person
+
+Version 1 features:
+- clothing upload
+- person image upload
+- AI model selection
+- generate result
+- preview
+- download
+- history
+
+Future features:
+- body parameters
+- hairstyle options
+- fashion recommendations
+- store owner dashboard
