@@ -19,11 +19,18 @@ async function generate({ personImagePath, clothImagePath }) {
       }
     );
 
+    const firstFile = Array.isArray(output) ? output[0] : output;
+    const imageUrl =
+      firstFile && typeof firstFile.url === "function"
+        ? firstFile.url()
+        : null;
+
     return {
       success: true,
       mode: "real-ai",
       provider: "replicate",
-      resultImage: output
+      resultImage: imageUrl,
+      resultUrl: imageUrl
     };
   } catch (error) {
     console.error("Replicate provider error:", error.message);

@@ -1,14 +1,29 @@
-exports.uploadImage = (req, res) => {
+const path = require("path");
+const { replaceWithOptimizedImage } = require("../services/imageService");
+const { successResponse } = require("../utils/apiResponse");
+
+exports.uploadImage = async (req, res, next) => {
+  try {
     if (!req.file) {
-        return res.status(400).json({
-            success: false,
-            message: "No file uploaded"
-        });
+      const error = new Error("No file uploaded");
+      error.statusCode = 400;
+      return next(error);
     }
 
-    res.status(200).json({
-        success: true,
-        message: "File uploaded successfully",
-        file: req.file.filename
-    });
+    const originalPath = req.file.path;
+    const optimizedPath = await replaceWithOptimizedImage(originalPath);
+    const optimizedFileName = path.basename(optimizedPath);
+
+    return successResponse(
+      res,
+      "File uploaded and optimized successfully",
+      {
+        fileName: optimizedFileName,
+        fileUrl: `${req.protocol}://${req.get("host")}/uploads/${optimizedFileName}`
+      },
+      200
+    );
+  } catch (error) {
+    next(error);
+  }
 };
