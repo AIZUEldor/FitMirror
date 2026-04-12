@@ -3,6 +3,7 @@ const router = express.Router();
 
 const upload = require("../config/multer"); // ✅ mana bu eng muhim
 const { uploadImage } = require("../controllers/uploadController");
+const { protect } = require("../middleware/authMiddleware");
 /**
  * @swagger
  * /api/upload:
@@ -48,7 +49,7 @@ const { uploadImage } = require("../controllers/uploadController");
  *               error: {}
  */
 
-router.post("/upload", upload.single("image"), uploadImage);
+router.post("/upload", protect, upload.single("image"), uploadImage);
 
 
 module.exports = router;

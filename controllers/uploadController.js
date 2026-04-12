@@ -1,5 +1,6 @@
 const path = require("path");
 const { replaceWithOptimizedImage } = require("../services/imageService");
+const { createImage } = require("../services/imageDbService");
 const { successResponse } = require("../utils/apiResponse");
 
 exports.uploadImage = async (req, res, next) => {
@@ -10,16 +11,34 @@ exports.uploadImage = async (req, res, next) => {
       return next(error);
     }
 
+   const { type, sessionId } = req.body;
+    if (!type) {
+      const error = new Error("Image type majburiy");
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const originalPath = req.file.path;
     const optimizedPath = await replaceWithOptimizedImage(originalPath);
     const optimizedFileName = path.basename(optimizedPath);
+    const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${optimizedFileName}`;
+
+    const image = await createImage({
+      userId: req.user.userId,
+      type,
+      sessionId,
+      fileName: optimizedFileName,
+      fileUrl,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      
+    });
 
     return successResponse(
       res,
       "File uploaded and optimized successfully",
       {
-        fileName: optimizedFileName,
-        fileUrl: `${req.protocol}://${req.get("host")}/uploads/${optimizedFileName}`
+        image,
       },
       200
     );

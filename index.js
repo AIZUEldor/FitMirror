@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const userRoutes = require("./routes/userRoutes");
 const express = require("express");
 const cors = require("cors");
 const homeRoutes = require("./routes/homeRoutes");
@@ -32,7 +32,7 @@ app.use(helmet());
 app.use(limiter);
 app.use(cors());
 app.use(express.json());
-
+app.use("/api/users", userRoutes);
 app.use("/", homeRoutes);
 app.use("/api", healthRoutes);
 app.use("/api", uploadRoutes);
