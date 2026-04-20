@@ -5,3 +5,4 @@ exports.getHome = (req, res) => {
     app: "FitMirror Backend"
   });
 };
+//multerjs har doyyim birincgi yozilishi kerak . shun i qo'sh9b qo'y . agar yozilmasa conflictga olib kelishi mumkin . 

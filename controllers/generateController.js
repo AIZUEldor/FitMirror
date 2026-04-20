@@ -2,12 +2,14 @@ const fs = require("fs/promises");
 const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
+const prisma = require("../src/lib/prisma");
 
 const { generateTryOnImage } = require("../services/aiService");
 const { replaceWithOptimizedImage } = require("../services/imageService");
 const { successResponse } = require("../utils/apiResponse");
 const { createResultImage } = require("../services/imageDbService");
 const { getImageById } = require("../services/imageDbService");
+const { PLAN_LIMITS, CREDIT_PACKS } = require("../config/planLimits");
 
 function createHttpError(message, statusCode = 500) {
   const error = new Error(message);
@@ -93,20 +95,46 @@ exports.generateTryOn = async (req, res, next) => {
   let optimizedPersonPath;
   let optimizedClothPath;
 
-  try {
+    try {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.user.userId,
+    },
+    select: {
+      id: true,
+      plan: true,
+      monthlyGenerationLimit: true,
+      monthlyGenerationUsed: true,
+    },
+  });
+
+  if (!user) {
+    throw createHttpError("User topilmadi", 404);
+  }
+
+  const currentPlanLimit = PLAN_LIMITS[user.plan];
+
+if (
+  user.monthlyGenerationUsed >= currentPlanLimit
+) {
+  throw createHttpError("Oylik generation limitingiz tugagan", 403);
+}
     const { personFile, clothFile, personImageId, clothImageId } =
   await getInputSources(req);
-    async function getInputSources(req) {
+
+async function getInputSources(req) {
   const personFiles = req.files?.personImage;
   const clothFiles = req.files?.clothImage;
 
-  const personFile = Array.isArray(personFiles) && personFiles.length > 0
-    ? personFiles[0]
-    : null;
+  const personFile =
+    Array.isArray(personFiles) && personFiles.length > 0
+      ? personFiles[0]
+      : null;
 
-  const clothFile = Array.isArray(clothFiles) && clothFiles.length > 0
-    ? clothFiles[0]
-    : null;
+  const clothFile =
+    Array.isArray(clothFiles) && clothFiles.length > 0
+      ? clothFiles[0]
+      : null;
 
   const { personImageId, clothImageId } = req.body;
 
@@ -144,6 +172,18 @@ optimizedClothPath = await replaceWithOptimizedImage(clothSourcePath);
       optimizedPersonPath,
       optimizedClothPath
     );
+    if (PLAN_LIMITS[user.plan] > 0) {
+  await prisma.user.update({
+    where: {
+      id: req.user.userId,
+    },
+    data: {
+      monthlyGenerationUsed: {
+        increment: 1,
+      },
+    },
+  });
+}
 
     const resultFileName = extractFileName(result.resultUrl);
 

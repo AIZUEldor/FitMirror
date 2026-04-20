@@ -17,10 +17,12 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 const cron = require("node-cron");
+const { resetMonthlyPlans } = require("./services/planResetService");
 //const { runCleanup } = require("./services/fileCleanupService");
 const provider = "replicate";
 const app = express();
 const PORT = process.env.PORT || 5000;
+const authRoutes = require("./routes/authRoutes");
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -44,11 +46,20 @@ app.use("/api", generateRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/generated", express.static("generated"));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
+app.use("/api/auth", authRoutes);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+cron.schedule("0 0 * * *", async () => {
+  try {
+    const result = await resetMonthlyPlans();
+    console.log("Monthly plan reset bajarildi:", result);
+  } catch (error) {
+    console.error("Monthly plan reset xatolik:", error.message);
+  }
 });
 //cron.schedule("*/10 * * * *", () => {
  // console.log("Running cleanup (cron)...");

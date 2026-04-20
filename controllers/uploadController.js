@@ -2,6 +2,7 @@ const path = require("path");
 const { replaceWithOptimizedImage } = require("../services/imageService");
 const { createImage } = require("../services/imageDbService");
 const { successResponse } = require("../utils/apiResponse");
+// eski qismlar yangilandi shuni unutma
 
 exports.uploadImage = async (req, res, next) => {
   try {

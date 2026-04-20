@@ -10,6 +10,8 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
+// kerakli qismnlarni qo;shish kerak har doyyim shuni esingdan chiqarma .
+
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["image/jpeg", "image/png"];

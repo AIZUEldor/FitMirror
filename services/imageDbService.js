@@ -103,6 +103,34 @@ const getImageById = async (imageId, userId) => {
   return image;
 };
 
+const deleteImageById = async (imageId, userId) => {
+  if (!imageId || !userId) {
+    const error = new Error("Image ID va User ID majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const image = await prisma.image.findFirst({
+    where: {
+      id: imageId,
+      userId,
+    },
+  });
+
+  if (!image) {
+    const error = new Error("Rasm topilmadi");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await prisma.image.delete({
+    where: {
+      id: image.id,
+    },
+  });
+
+  return image;
+};
 
 module.exports = {
   createImage,
@@ -110,5 +138,6 @@ module.exports = {
   getUserImages,
   getUserSessions,
   getImageById,
+  deleteImageById,
 };
 

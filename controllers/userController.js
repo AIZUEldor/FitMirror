@@ -1,6 +1,18 @@
 const prisma = require("../src/lib/prisma");
 const userService = require("../services/userService");
-const { getUserImages } = require("../services/imageDbService");
+const {
+  getUserImages,
+  deleteImageById
+} = require("../services/imageDbService");
+const {
+  registerUser,
+  loginUser,
+  getMe,
+  upgradeUserPlan,
+  buyUserCredits,
+  getUserDevices,
+  removeUserDevice
+} = require("../services/userService");
 
 exports.getUsers = async (req, res) => {
   try {
@@ -40,12 +52,14 @@ exports.registerUser = async (req, res, next) => {
 
 exports.loginUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, deviceId, deviceName } = req.body;
 
-    const user = await userService.loginUser({
-      email,
-      password,
-    });
+const user = await userService.loginUser({
+  email,
+  password,
+  deviceId,
+  deviceName,
+});
 
     return res.status(200).json({
       success: true,
@@ -67,14 +81,34 @@ exports.getMe = async (req, res, next) => {
         id: true,
         email: true,
         fullName: true,
+        plan: true,
+        monthlyGenerationLimit: true,
+        monthlyGenerationUsed: true,
+        planStartedAt: true,
+        planExpiresAt: true,
         createdAt: true,
       },
     });
+    const deviceCount = await prisma.userDevice.count({
+  where: {
+    userId: req.user.userId,
+  },
+});
+
+const remainingGenerations = Math.max(
+  user.monthlyGenerationLimit - user.monthlyGenerationUsed,
+  0
+);
 
     return res.status(200).json({
       success: true,
       message: "User ma'lumotlari",
-      data: user,
+      data: {
+  ...user,
+  remainingGenerations,
+  deviceCount,
+  maxDevices: 3,
+}
     });
   } catch (error) {
     next(error);
@@ -131,6 +165,88 @@ if (img.type === "result" && !sessionsMap[img.sessionId].result) {
       success: true,
       message: "User sessionlari",
       data: groupedSessions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.upgradePlan = async (req, res, next) => {
+  try {
+    const user = await upgradeUserPlan({
+      userId: req.user.userId,
+      plan: req.body.plan,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Tarif muvaffaqiyatli yangilandi",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.buyCredits = async (req, res, next) => {
+  try {
+    const user = await buyUserCredits({
+      userId: req.user.userId,
+      pack: req.body.pack,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Credit muvaffaqiyatli qo'shildi",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getDevices = async (req, res, next) => {
+  try {
+    const devices = await getUserDevices({
+      userId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "User qurilmalari",
+      data: devices,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteDevice = async (req, res, next) => {
+  try {
+    const result = await removeUserDevice({
+      userId: req.user.userId,
+      deviceId: req.params.deviceId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteImage = async (req, res, next) => {
+  try {
+    await deleteImageById(
+      req.params.imageId,
+      req.user.userId
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Rasm o‘chirildi"
     });
   } catch (error) {
     next(error);
