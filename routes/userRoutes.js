@@ -18,7 +18,7 @@ const {
 
 
 router.get("/", getUsers);
-router.post("/register", registerUser);
+//router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/google", googleLogin);
 router.get("/me", protect, getMe);

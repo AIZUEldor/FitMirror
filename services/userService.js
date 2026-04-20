@@ -78,6 +78,12 @@ const loginUser = async ({ email, password, deviceId, deviceName }) => {
     where: { email },
   });
 
+  if (user.authProvider === "GOOGLE") {
+  const error = new Error("Bu account uchun Google login ishlating");
+  error.statusCode = 401;
+  throw error;
+}
+
   if (!user) {
     const error = new Error("Email yoki password noto'g'ri");
     error.statusCode = 401;
