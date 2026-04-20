@@ -5,6 +5,7 @@ const {
   getUsers,
   registerUser,
   loginUser,
+  googleLogin,
   getMe,
   getMyImages,
   getMySessions,
@@ -19,6 +20,7 @@ const {
 router.get("/", getUsers);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/google", googleLogin);
 router.get("/me", protect, getMe);
 router.get("/images", protect, getMyImages);
 router.get("/sessions", protect, getMySessions);

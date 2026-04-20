@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const prisma = require("../src/lib/prisma");
 const jwt = require("jsonwebtoken");
 const { PLAN_LIMITS, CREDIT_PACKS } = require("../config/planLimits");
+const { googleClient } = require("./googleAuthService");
 
 const registerUser = async ({ email, password, fullName }) => {
   if (!email || !password) {
@@ -9,7 +10,7 @@ const registerUser = async ({ email, password, fullName }) => {
     error.statusCode = 400;
     throw error;
   }
-
+  
   email = email.trim().toLowerCase();
   fullName = fullName ? fullName.trim() : null;
 
@@ -66,6 +67,7 @@ const loginUser = async ({ email, password, deviceId, deviceName }) => {
     error.statusCode = 400;
     throw error;
   }
+
   if (!deviceId) {
     const error = new Error("deviceId majburiy");
     error.statusCode = 400;
@@ -89,51 +91,171 @@ const loginUser = async ({ email, password, deviceId, deviceName }) => {
     error.statusCode = 401;
     throw error;
   }
-  const existingDevice = await prisma.userDevice.findUnique({
-  where: {
-    userId_deviceId: {
-      userId: user.id,
-      deviceId: deviceId,
-    },
-  },
-});
 
-if (!existingDevice) {
-  const deviceCount = await prisma.userDevice.count({
+  const existingDevice = await prisma.userDevice.findUnique({
     where: {
-      userId: user.id,
+      userId_deviceId: {
+        userId: user.id,
+        deviceId: deviceId,
+      },
     },
   });
 
-  if (deviceCount >= 3) {
-    const error = new Error("Maksimum 3 ta qurilmada foydalanish mumkin");
-    error.statusCode = 403;
+  if (!existingDevice) {
+    const deviceCount = await prisma.userDevice.count({
+      where: { userId: user.id },
+    });
+
+    if (deviceCount >= 3) {
+      const error = new Error("Maksimum 3 ta qurilmada foydalanish mumkin");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    await prisma.userDevice.create({
+      data: {
+        userId: user.id,
+        deviceId: deviceId,
+        deviceName: deviceName || null,
+      },
+    });
+  }
+
+  const token = jwt.sign(
+    { userId: user.id },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+    },
+    token,
+  };
+};
+
+const loginWithGoogle = async ({ token, deviceId, deviceName }) => {
+  if (!token) {
+    const error = new Error("Google token majburiy");
+    error.statusCode = 400;
     throw error;
   }
 
-  await prisma.userDevice.create({
-    data: {
-      userId: user.id,
-      deviceId: deviceId,
-      deviceName: deviceName || null,
+  if (!deviceId) {
+    const error = new Error("deviceId majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) {
+    const error = new Error("Google payload topilmadi");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (!payload.email) {
+    const error = new Error("Google account email topilmadi");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (!payload.email_verified) {
+    const error = new Error("Google email tasdiqlanmagan");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const email = payload.email.trim().toLowerCase();
+  const fullName = payload.name ? payload.name.trim() : null;
+  const profilePicture = payload.picture || null;
+  const googleId = payload.sub;
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  let user = existingUser;
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email,
+        password: "GOOGLE_AUTH",
+        googleId,
+        authProvider: "GOOGLE",
+        profilePicture,
+        fullName,
+        plan: "FREE",
+        monthlyGenerationLimit: 2,
+        monthlyGenerationUsed: 0,
+      },
+    });
+  } else {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        googleId: user.googleId || googleId,
+        authProvider: "GOOGLE",
+        profilePicture: user.profilePicture || profilePicture,
+        fullName: user.fullName || fullName,
+      },
+    });
+  }
+
+  const existingDevice = await prisma.userDevice.findUnique({
+    where: {
+      userId_deviceId: {
+        userId: user.id,
+        deviceId: deviceId,
+      },
     },
   });
-}
 
-  const token = jwt.sign(
-  { userId: user.id },
-  process.env.JWT_SECRET,
-  { expiresIn: "7d" }
-);
+  if (!existingDevice) {
+    const deviceCount = await prisma.userDevice.count({
+      where: { userId: user.id },
+    });
 
-return {
-  user: {
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName,
-  },
-  token,
-};
+    if (deviceCount >= 3) {
+      const error = new Error("Maksimum 3 ta qurilmada foydalanish mumkin");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    await prisma.userDevice.create({
+      data: {
+        userId: user.id,
+        deviceId: deviceId,
+        deviceName: deviceName || null,
+      },
+    });
+  }
+
+  const jwtToken = jwt.sign(
+    { userId: user.id },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      profilePicture: user.profilePicture,
+    },
+    token: jwtToken,
+  };
 };
 
 const upgradeUserPlan = async ({ userId, plan }) => {
@@ -270,6 +392,7 @@ const removeUserDevice = async ({ userId, deviceId }) => {
 module.exports = {
   registerUser,
   loginUser,
+  loginWithGoogle,
   upgradeUserPlan,
   buyUserCredits,
   getUserDevices,

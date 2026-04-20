@@ -7,6 +7,7 @@ const {
 const {
   registerUser,
   loginUser,
+  loginWithGoogle,
   getMe,
   upgradeUserPlan,
   buyUserCredits,
@@ -65,6 +66,26 @@ const user = await userService.loginUser({
       success: true,
       message: "Login muvaffaqiyatli",
       data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.googleLogin = async (req, res, next) => {
+  try {
+    const { token, deviceId, deviceName } = req.body;
+
+    const result = await loginWithGoogle({
+      token,
+      deviceId,
+      deviceName,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Google login muvaffaqiyatli",
+      data: result,
     });
   } catch (error) {
     next(error);
