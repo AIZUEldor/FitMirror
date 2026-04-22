@@ -414,6 +414,32 @@ const updatePaymentStatus = async ({ paymentId, status }) => {
     throw error;
   }
 
+  if (status === PAYMENT_STATUS.PAID && existingPayment.planName) {
+    const selectedPlan = existingPayment.planName.toUpperCase();
+
+    const planLimits = {
+      FREE: 2,
+      PLUS: 10,
+      PRO: 20,
+      PRIME: 40,
+    };
+
+    const monthlyGenerationLimit = planLimits[selectedPlan];
+
+    if (monthlyGenerationLimit) {
+      await prisma.user.update({
+        where: { id: existingPayment.userId },
+        data: {
+          plan: selectedPlan,
+          monthlyGenerationLimit,
+          monthlyGenerationUsed: 0,
+          planStartedAt: new Date(),
+          planExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      });
+    }
+  }
+
   const updatedPayment = await prisma.payment.update({
     where: { id: paymentId },
     data: { status },
