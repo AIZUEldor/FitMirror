@@ -3,6 +3,7 @@ const prisma = require("../src/lib/prisma");
 const jwt = require("jsonwebtoken");
 const { PLAN_LIMITS, CREDIT_PACKS } = require("../config/planLimits");
 const { googleClient } = require("./googleAuthService");
+const PAYMENT_STATUS = require("../config/paymentStatus");
 
 const registerUser = async ({ email, password, fullName }) => {
   if (!email || !password) {
@@ -78,14 +79,14 @@ const loginUser = async ({ email, password, deviceId, deviceName }) => {
     where: { email },
   });
 
-  if (user.authProvider === "GOOGLE") {
-  const error = new Error("Bu account uchun Google login ishlating");
-  error.statusCode = 401;
-  throw error;
-}
-
   if (!user) {
     const error = new Error("Email yoki password noto'g'ri");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  if (user.authProvider === "GOOGLE") {
+    const error = new Error("Bu account uchun Google login ishlating");
     error.statusCode = 401;
     throw error;
   }
@@ -350,6 +351,94 @@ const buyUserCredits = async ({ userId, pack }) => {
   return updatedUser;
 };
 
+const createPaymentRecord = async ({
+  userId,
+  provider,
+  amount,
+  currency = "UZS",
+  status = PAYMENT_STATUS.PENDING,
+  planName = null,
+}) => {
+  if (!userId) {
+    const error = new Error("userId majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!provider) {
+    const error = new Error("provider majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (amount === undefined || amount === null) {
+    const error = new Error("amount majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const payment = await prisma.payment.create({
+    data: {
+      userId,
+      provider,
+      amount,
+      currency,
+      status , 
+      planName,
+    },
+  });
+
+  return payment;
+};
+
+const updatePaymentStatus = async ({ paymentId, status }) => {
+  if (!paymentId) {
+    const error = new Error("paymentId majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!status) {
+    const error = new Error("status majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existingPayment = await prisma.payment.findUnique({
+    where: { id: paymentId },
+  });
+
+  if (!existingPayment) {
+    const error = new Error("Payment topilmadi");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const updatedPayment = await prisma.payment.update({
+    where: { id: paymentId },
+    data: { status },
+  });
+
+  return updatedPayment;
+};
+
+const getUserPayments = async ({ userId }) => {
+  if (!userId) {
+    const error = new Error("userId majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const payments = await prisma.payment.findMany({
+    where: { userId },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return payments;
+};
+
 const getUserDevices = async ({ userId }) => {
   const devices = await prisma.userDevice.findMany({
     where: {
@@ -402,5 +491,8 @@ module.exports = {
   upgradeUserPlan,
   buyUserCredits,
   getUserDevices,
-  removeUserDevice
+  removeUserDevice,
+  createPaymentRecord,
+  updatePaymentStatus,
+  getUserPayments
 };

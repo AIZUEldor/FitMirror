@@ -12,7 +12,10 @@ const {
   upgradeUserPlan,
   buyUserCredits,
   getUserDevices,
-  removeUserDevice
+  removeUserDevice,
+  createPaymentRecord,
+  updatePaymentStatus,
+  getUserPayments
 } = require("../services/userService");
 
 exports.getUsers = async (req, res) => {
@@ -220,6 +223,61 @@ exports.buyCredits = async (req, res, next) => {
       success: true,
       message: "Credit muvaffaqiyatli qo'shildi",
       data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createTestPayment = async (req, res, next) => {
+  try {
+    const { provider, amount, status, planName } = req.body;
+
+    const payment = await createPaymentRecord({
+      userId: req.user.userId,
+      provider,
+      amount,
+      status,
+      planName,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Test payment yaratildi",
+      data: payment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updatePayment = async (req, res, next) => {
+  try {
+    const payment = await updatePaymentStatus({
+      paymentId: req.params.paymentId,
+      status: req.body.status,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Payment status yangilandi",
+      data: payment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getMyPayments = async (req, res, next) => {
+  try {
+    const payments = await getUserPayments({
+      userId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "User to'lovlari",
+      data: payments,
     });
   } catch (error) {
     next(error);

@@ -1,0 +1,7 @@
+const PAYMENT_STATUS = {
+  PENDING: "PENDING",
+  PAID: "PAID",
+  FAILED: "FAILED",
+};
+
+module.exports = PAYMENT_STATUS;
