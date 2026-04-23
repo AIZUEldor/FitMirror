@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
+const paymentWebhookLogController = require("../controllers/paymentWebhookLogController");
 const {
   getUsers,
   registerUser,
@@ -38,5 +39,10 @@ router.post("/payments/click/webhook", clickWebhook);
 router.get("/devices", protect, getDevices);
 router.delete("/devices/:deviceId", protect, deleteDevice);
 router.delete("/images/:imageId", protect, deleteImage);
+router.get(
+  "/payments/webhook-logs",
+  protect,
+  paymentWebhookLogController.getPaymentWebhookLogs
+);
 
 module.exports = router;
