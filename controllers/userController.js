@@ -1,6 +1,7 @@
 const prisma = require("../src/lib/prisma");
 const userService = require("../services/userService");
 const PAYMENT_PROVIDERS = require("../config/paymentProviders");
+const clickConfig = require("../config/clickConfig");
 const {
   getUserImages,
   deleteImageById
@@ -273,26 +274,36 @@ exports.clickWebhook = async (req, res, next) => {
   try {
     console.log("CLICK WEBHOOK BODY:", req.body);
 
-    if (!req.body.payment_id || !req.body.status) {
-  return res.status(400).json({
-    success: false,
-    message: "payment_id va status majburiy",
-  });
-  }
+    const incomingSecret = req.headers["x-click-secret"];
 
-  const incomingSecret = req.headers["x-click-secret"];
+    if (incomingSecret !== clickConfig.webhookSecret) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized webhook",
+      });
+    }
 
-if (incomingSecret !== process.env.CLICK_WEBHOOK_SECRET) {
-  return res.status(401).json({
-    success: false,
-    message: "Unauthorized webhook",
-  });
-}
+    const paymentId =
+      req.body.payment_id ||
+      req.body.paymentId ||
+      req.body.merchant_trans_id;
+
+    const paymentStatus =
+      req.body.status ||
+      req.body.payment_status ||
+      req.body.status_note;
+
+    if (!paymentId || !paymentStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "paymentId va status topilmadi",
+      });
+    }
 
     await updatePaymentStatus({
-  paymentId: req.body.payment_id,
-  status: req.body.status,
-  });
+      paymentId,
+      status: paymentStatus,
+    });
 
     return res.status(200).json({
       success: true,
