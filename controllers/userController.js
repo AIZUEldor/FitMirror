@@ -293,6 +293,15 @@ exports.clickWebhook = async (req, res, next) => {
       req.body.payment_status ||
       req.body.status_note;
 
+      let normalizedStatus = String(paymentStatus).toUpperCase();
+
+if (
+  normalizedStatus === "SUCCESS" ||
+  normalizedStatus === "COMPLETED"
+) {
+  normalizedStatus = "PAID";
+}
+
     if (!paymentId || !paymentStatus) {
       return res.status(400).json({
         success: false,
@@ -301,10 +310,9 @@ exports.clickWebhook = async (req, res, next) => {
     }
 
     await updatePaymentStatus({
-      paymentId,
-      status: paymentStatus,
-    });
-
+  paymentId,
+  status: normalizedStatus,
+});
     return res.status(200).json({
       success: true,
       message: "Click webhook qabul qilindi",
