@@ -415,6 +415,13 @@ const updatePaymentStatus = async ({ paymentId, status }) => {
     throw error;
   }
 
+  if (
+  existingPayment.status === PAYMENT_STATUS.PAID &&
+  status === PAYMENT_STATUS.PAID
+  ) {
+  return existingPayment;
+  }
+
   if (status === PAYMENT_STATUS.PAID && existingPayment.planName) {
     const selectedPlan = existingPayment.planName.toUpperCase();
 
