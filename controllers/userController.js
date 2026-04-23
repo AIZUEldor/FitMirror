@@ -17,6 +17,7 @@ const {
   removeUserDevice,
   createPaymentRecord,
   updatePaymentStatus,
+  createWebhookLog,
   getUserPayments
 } = require("../services/userService");
 
@@ -308,6 +309,13 @@ if (
         message: "paymentId va status topilmadi",
       });
     }
+
+    await createWebhookLog({
+  provider: "CLICK",
+  paymentId,
+  status: normalizedStatus,
+  rawBody: req.body,
+});
 
     await updatePaymentStatus({
   paymentId,

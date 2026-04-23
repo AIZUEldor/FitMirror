@@ -456,6 +456,24 @@ const updatePaymentStatus = async ({ paymentId, status }) => {
   return updatedPayment;
 };
 
+const createWebhookLog = async ({
+  provider,
+  paymentId = null,
+  status = null,
+  rawBody,
+}) => {
+  const webhookLog = await prisma.paymentWebhookLog.create({
+    data: {
+      provider,
+      paymentId,
+      status,
+      rawBody,
+    },
+  });
+
+  return webhookLog;
+};
+
 const getUserPayments = async ({ userId }) => {
   if (!userId) {
     const error = new Error("userId majburiy");
@@ -528,5 +546,6 @@ module.exports = {
   removeUserDevice,
   createPaymentRecord,
   updatePaymentStatus,
+  createWebhookLog,
   getUserPayments
 };

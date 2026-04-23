@@ -82,3 +82,17 @@ model Payment {
   @@index([status])
   @@index([provider])
 }
+
+model PaymentWebhookLog {
+  id          String   @id @default(cuid())
+  provider    String
+  paymentId   String?
+  status      String?
+  rawBody     Json
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([provider])
+  @@index([paymentId])
+  @@index([processed])
+}
