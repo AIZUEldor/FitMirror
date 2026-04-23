@@ -1,0 +1,6 @@
+const PAYMENT_PROVIDERS = {
+  CLICK: "CLICK",
+  PAYME: "PAYME",
+};
+
+module.exports = PAYMENT_PROVIDERS;

@@ -1,5 +1,6 @@
 const prisma = require("../src/lib/prisma");
 const userService = require("../services/userService");
+const PAYMENT_PROVIDERS = require("../config/paymentProviders");
 const {
   getUserImages,
   deleteImageById
@@ -231,11 +232,11 @@ exports.buyCredits = async (req, res, next) => {
 
 exports.createTestPayment = async (req, res, next) => {
   try {
-    const { provider, amount, status, planName } = req.body;
+    const { amount, status, planName } = req.body;
 
     const payment = await createPaymentRecord({
       userId: req.user.userId,
-      provider,
+      provider: PAYMENT_PROVIDERS.CLICK,
       amount,
       status,
       planName,
@@ -262,6 +263,19 @@ exports.updatePayment = async (req, res, next) => {
       success: true,
       message: "Payment status yangilandi",
       data: payment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.clickWebhook = async (req, res, next) => {
+  try {
+    console.log("CLICK WEBHOOK BODY:", req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: "Click webhook qabul qilindi",
     });
   } catch (error) {
     next(error);

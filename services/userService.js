@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { PLAN_LIMITS, CREDIT_PACKS } = require("../config/planLimits");
 const { googleClient } = require("./googleAuthService");
 const PAYMENT_STATUS = require("../config/paymentStatus");
+const PAYMENT_PROVIDERS = require("../config/paymentProviders");
 
 const registerUser = async ({ email, password, fullName }) => {
   if (!email || !password) {

@@ -16,6 +16,7 @@ const {
   deleteImage,
   createTestPayment,
   updatePayment,
+  clickWebhook,
   getMyPayments
 
 } = require("../controllers/userController");
@@ -33,6 +34,7 @@ router.post("/buy-credits", protect, buyCredits);
 router.post("/payments/test", protect, createTestPayment);
 router.put("/payments/:paymentId", protect, updatePayment);
 router.get("/payments", protect, getMyPayments);
+router.post("/payments/click/webhook", clickWebhook);
 router.get("/devices", protect, getDevices);
 router.delete("/devices/:deviceId", protect, deleteDevice);
 router.delete("/images/:imageId", protect, deleteImage);
