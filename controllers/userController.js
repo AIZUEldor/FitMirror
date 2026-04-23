@@ -278,12 +278,21 @@ exports.clickWebhook = async (req, res, next) => {
     success: false,
     message: "payment_id va status majburiy",
   });
+  }
+
+  const incomingSecret = req.headers["x-click-secret"];
+
+if (incomingSecret !== process.env.CLICK_WEBHOOK_SECRET) {
+  return res.status(401).json({
+    success: false,
+    message: "Unauthorized webhook",
+  });
 }
 
     await updatePaymentStatus({
   paymentId: req.body.payment_id,
   status: req.body.status,
-});
+  });
 
     return res.status(200).json({
       success: true,
