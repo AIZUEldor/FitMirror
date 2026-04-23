@@ -273,6 +273,18 @@ exports.clickWebhook = async (req, res, next) => {
   try {
     console.log("CLICK WEBHOOK BODY:", req.body);
 
+    if (!req.body.payment_id || !req.body.status) {
+  return res.status(400).json({
+    success: false,
+    message: "payment_id va status majburiy",
+  });
+}
+
+    await updatePaymentStatus({
+  paymentId: req.body.payment_id,
+  status: req.body.status,
+});
+
     return res.status(200).json({
       success: true,
       message: "Click webhook qabul qilindi",
