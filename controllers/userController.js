@@ -2,6 +2,8 @@ const prisma = require("../src/lib/prisma");
 const userService = require("../services/userService");
 const PAYMENT_PROVIDERS = require("../config/paymentProviders");
 const clickConfig = require("../config/clickConfig");
+const { handleClickWebhook } = require("../services/payments/clickPaymentService");
+const { handlePaymeWebhook } = require("../services/payments/paymePaymentService");
 const {
   getUserImages,
   deleteImageById
@@ -273,57 +275,29 @@ exports.updatePayment = async (req, res, next) => {
 
 exports.clickWebhook = async (req, res, next) => {
   try {
-    console.log("CLICK WEBHOOK BODY:", req.body);
+    await handleClickWebhook({
+      headers: req.headers,
+      body: req.body,
+    });
 
-    const incomingSecret = req.headers["x-click-secret"];
-
-    if (incomingSecret !== clickConfig.webhookSecret) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized webhook",
-      });
-    }
-
-    const paymentId =
-      req.body.payment_id ||
-      req.body.paymentId ||
-      req.body.merchant_trans_id;
-
-    const paymentStatus =
-      req.body.status ||
-      req.body.payment_status ||
-      req.body.status_note;
-
-      let normalizedStatus = String(paymentStatus).toUpperCase();
-
-if (
-  normalizedStatus === "SUCCESS" ||
-  normalizedStatus === "COMPLETED"
-) {
-  normalizedStatus = "PAID";
-}
-
-    if (!paymentId || !paymentStatus) {
-      return res.status(400).json({
-        success: false,
-        message: "paymentId va status topilmadi",
-      });
-    }
-
-    await createWebhookLog({
-  provider: "CLICK",
-  paymentId,
-  status: normalizedStatus,
-  rawBody: req.body,
-});
-
-    await updatePaymentStatus({
-  paymentId,
-  status: normalizedStatus,
-});
     return res.status(200).json({
       success: true,
       message: "Click webhook qabul qilindi",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.paymeWebhook = async (req, res, next) => {
+  try {
+    await handlePaymeWebhook({
+      body: req.body,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Payme webhook qabul qilindi",
     });
   } catch (error) {
     next(error);
