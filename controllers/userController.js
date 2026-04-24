@@ -1,9 +1,9 @@
 const prisma = require("../src/lib/prisma");
 const userService = require("../services/userService");
-const PAYMENT_PROVIDERS = require("../config/paymentProviders");
-const clickConfig = require("../config/clickConfig");
-const { handleClickWebhook } = require("../services/payments/clickPaymentService");
-const { handlePaymeWebhook } = require("../services/payments/paymePaymentService");
+const {
+  handlePaymentWebhook,
+  PAYMENT_PROVIDERS,
+} = require("../services/payments/paymentProviderService");
 const {
   getUserImages,
   deleteImageById
@@ -275,7 +275,8 @@ exports.updatePayment = async (req, res, next) => {
 
 exports.clickWebhook = async (req, res, next) => {
   try {
-    await handleClickWebhook({
+    await handlePaymentWebhook({
+      provider: PAYMENT_PROVIDERS.CLICK,
       headers: req.headers,
       body: req.body,
     });
@@ -291,7 +292,8 @@ exports.clickWebhook = async (req, res, next) => {
 
 exports.paymeWebhook = async (req, res, next) => {
   try {
-    await handlePaymeWebhook({
+    await handlePaymentWebhook({
+      provider: PAYMENT_PROVIDERS.PAYME,
       body: req.body,
     });
 
