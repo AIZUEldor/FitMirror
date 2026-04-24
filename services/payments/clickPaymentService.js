@@ -68,6 +68,20 @@ const handleClickWebhook = async ({ headers, body }) => {
   });
 };
 
+const createClickCheckout = async ({ payment }) => {
+  const checkoutUrl =
+    `${clickConfig.checkoutBaseUrl}` +
+    `?merchant_id=${clickConfig.merchantId}` +
+    `&amount=${payment.amount}` +
+    `&transaction_param=${payment.id}`;
+
+  return {
+    provider: CLICK_PROVIDER,
+    checkoutUrl,
+  };
+};
+
 module.exports = {
   handleClickWebhook,
+  createClickCheckout,
 };

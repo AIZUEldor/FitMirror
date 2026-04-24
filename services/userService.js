@@ -5,6 +5,10 @@ const { PLAN_LIMITS, CREDIT_PACKS } = require("../config/planLimits");
 const { googleClient } = require("./googleAuthService");
 const PAYMENT_STATUS = require("../config/paymentStatus");
 const PAYMENT_PROVIDERS = require("../config/paymentProviders");
+const PRICING_CONFIG = require("../config/pricingConfig");
+const {
+  createCheckoutPayment: createProviderCheckoutPayment,
+} = require("./payments/paymentProviderService");
 
 const registerUser = async ({ email, password, fullName }) => {
   if (!email || !password) {
@@ -392,6 +396,70 @@ const createPaymentRecord = async ({
   return payment;
 };
 
+const createCheckoutPayment = async ({ userId, provider, planName, packName }) => {
+  if (!userId) {
+    const error = new Error("userId majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!provider) {
+    const error = new Error("provider majburiy");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  let selectedItem = null;
+  let finalPlanName = null;
+
+  if (planName) {
+    selectedItem = PRICING_CONFIG.SUBSCRIPTIONS[planName.toUpperCase()];
+    finalPlanName = planName.toUpperCase();
+  }
+
+  if (packName) {
+    selectedItem = PRICING_CONFIG.CREDITS[packName.toUpperCase()];
+    finalPlanName = packName.toUpperCase();
+  }
+
+  if (!selectedItem) {
+    const error = new Error("Noto'g'ri plan yoki credit pack tanlandi");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const payment = await createPaymentRecord({
+    userId,
+    provider: provider.toUpperCase(),
+    amount: selectedItem.price,
+    currency: "USD",
+    planName: finalPlanName,
+  });
+
+ const checkout = await createProviderCheckoutPayment({
+  provider: provider.toUpperCase(),
+  payment,
+  itemName: finalPlanName,
+});
+
+return {
+  payment: {
+    id: payment.id,
+    provider: payment.provider,
+    amount: payment.amount,
+    currency: payment.currency,
+    status: payment.status,
+    planName: payment.planName,
+  },
+  checkout: {
+    provider: checkout.provider,
+    checkoutUrl: checkout.checkoutUrl,
+    paymentId: payment.id,
+    expiresIn: 900,
+  },
+};
+};
+
 const updatePaymentStatus = async ({ paymentId, status }) => {
   if (!paymentId) {
     const error = new Error("paymentId majburiy");
@@ -547,5 +615,6 @@ module.exports = {
   createPaymentRecord,
   updatePaymentStatus,
   createWebhookLog,
+  createCheckoutPayment,
   getUserPayments
 };

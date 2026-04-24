@@ -8,6 +8,8 @@ const {
   getUserImages,
   deleteImageById
 } = require("../services/imageDbService");
+const PRICING_CONFIG = require("../config/pricingConfig");
+
 const {
   registerUser,
   loginUser,
@@ -300,6 +302,82 @@ exports.paymeWebhook = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Payme webhook qabul qilindi",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.stripeWebhook = async (req, res, next) => {
+  try {
+    await handlePaymentWebhook({
+      provider: PAYMENT_PROVIDERS.STRIPE,
+      headers: req.headers,
+      body: req.body,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Stripe webhook qabul qilindi",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.createCheckout = async (req, res, next) => {
+  try {
+    const checkout = await userService.createCheckoutPayment({
+      userId: req.user?.id || req.user?.userId || req.userId,
+      provider: req.body.provider,
+      planName: req.body.planName,
+      packName: req.body.packName,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Checkout payment yaratildi",
+      data: checkout,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPricing = async (req, res, next) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      message: "Pricing ma'lumotlari",
+      data: PRICING_CONFIG,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPaymentProviders = async (req, res, next) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      message: "Payment providerlar",
+      data: [
+        {
+          name: PAYMENT_PROVIDERS.CLICK,
+          title: "Click",
+          enabled: true,
+        },
+        {
+          name: PAYMENT_PROVIDERS.PAYME,
+          title: "Payme",
+          enabled: true,
+        },
+        {
+          name: PAYMENT_PROVIDERS.STRIPE,
+          title: "Stripe",
+          enabled: false,
+        },
+      ],
     });
   } catch (error) {
     next(error);

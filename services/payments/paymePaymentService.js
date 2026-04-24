@@ -60,6 +60,19 @@ const handlePaymeWebhook = async ({ body }) => {
   });
 };
 
+const createPaymeCheckout = async ({ payment }) => {
+  const checkoutUrl =
+    `https://checkout.paycom.uz/` +
+    `?id=${payment.id}` +
+    `&amount=${payment.amount}`;
+
+  return {
+    provider: PAYME_PROVIDER,
+    checkoutUrl,
+  };
+};
+
 module.exports = {
   handlePaymeWebhook,
+  createPaymeCheckout,
 };

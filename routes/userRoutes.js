@@ -19,7 +19,11 @@ const {
   updatePayment,
   clickWebhook,
   paymeWebhook,
-  getMyPayments
+  stripeWebhook,
+  getPricing,
+  createCheckout,
+  getMyPayments,
+  getPaymentProviders,
 
 } = require("../controllers/userController");
 
@@ -38,6 +42,10 @@ router.put("/payments/:paymentId", protect, updatePayment);
 router.get("/payments", protect, getMyPayments);
 router.post("/payments/click/webhook", clickWebhook);
 router.post("/payments/payme/webhook", paymeWebhook);
+router.post("/payments/stripe/webhook", stripeWebhook);
+router.get("/payments/pricing", getPricing);
+router.get("/payments/providers", getPaymentProviders);
+router.post("/payments/checkout", protect, createCheckout);
 router.get("/devices", protect, getDevices);
 router.delete("/devices/:deviceId", protect, deleteDevice);
 router.delete("/images/:imageId", protect, deleteImage);
