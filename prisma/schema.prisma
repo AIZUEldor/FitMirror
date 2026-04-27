@@ -32,6 +32,7 @@ model User {
 
   devices  UserDevice[]
   payments Payment[]
+  outfitRecommendations OutfitRecommendation[]
 }
 
 model UserDevice {
@@ -95,4 +96,61 @@ model PaymentWebhookLog {
   @@index([provider])
   @@index([paymentId])
   @@index([processed])
+}
+
+model Store {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // ONLINE yoki OFFLINE
+  phone       String?
+  address     String?
+  websiteUrl  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  storeId     String
+  name        String
+  category    String   // tshirt, pants, shoes, cap, accessory
+  gender      String?  // male, female, unisex
+  color       String?
+  price       Decimal? @db.Decimal(10, 2)
+  currency    String   @default("UZS")
+  imageUrl    String?
+  productUrl  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+  @@index([category])
+  @@index([gender])
+  @@index([isActive])
+}
+
+model OutfitRecommendation {
+  id              String   @id @default(cuid())
+  userId          String
+  imageId         String?
+  sessionId       String?
+  summary         String
+  recommendedJson Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([imageId])
+  @@index([sessionId])
 }

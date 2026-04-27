@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
 const paymentWebhookLogController = require("../controllers/paymentWebhookLogController");
+const outfitRecommendationController = require("../controllers/outfitRecommendationController");
 const {
   getUsers,
   registerUser,
@@ -53,6 +54,11 @@ router.get(
   "/payments/webhook-logs",
   protect,
   paymentWebhookLogController.getPaymentWebhookLogs
+);
+router.post(
+  "/outfit/recommendation",
+  protect,
+  outfitRecommendationController.createRecommendation
 );
 
 module.exports = router;
