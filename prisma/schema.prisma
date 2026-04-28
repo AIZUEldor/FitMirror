@@ -101,41 +101,59 @@ model PaymentWebhookLog {
 model Store {
   id          String   @id @default(cuid())
   name        String
-  type        String   // ONLINE yoki OFFLINE
+  type        String   // ONLINE, OFFLINE, HYBRID
   phone       String?
   address     String?
   websiteUrl  String?
+  logoUrl     String?
+  description String?
+  isPartner   Boolean  @default(true)
   isActive    Boolean  @default(true)
+  priority    Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   products Product[]
 
   @@index([type])
+  @@index([isPartner])
   @@index([isActive])
+  @@index([priority])
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  storeId     String
-  name        String
-  category    String   // tshirt, pants, shoes, cap, accessory
-  gender      String?  // male, female, unisex
-  color       String?
-  price       Decimal? @db.Decimal(10, 2)
-  currency    String   @default("UZS")
-  imageUrl    String?
-  productUrl  String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  storeId      String
+  name         String
+  description  String?
+  brand        String?
+  category     String   // tshirt, shirt, pants, jeans, shoes, cap, accessory
+  gender       String?  // male, female, unisex
+  color        String?
+  style        String?  // casual, classic, sport, streetwear
+  season       String?  // summer, winter, all-season
+  sizes        String[] @default([])
+  tags         String[] @default([])
+  price        Decimal? @db.Decimal(10, 2)
+  currency     String   @default("UZS")
+  imageUrl     String?
+  productUrl   String?
+  affiliateUrl String?
+  stockStatus  String   @default("IN_STOCK") // IN_STOCK, OUT_OF_STOCK
+  isActive     Boolean  @default(true)
+  priority     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId])
   @@index([category])
   @@index([gender])
+  @@index([style])
+  @@index([stockStatus])
   @@index([isActive])
+  @@index([priority])
 }
 
 model OutfitRecommendation {
@@ -145,6 +163,7 @@ model OutfitRecommendation {
   sessionId       String?
   summary         String
   recommendedJson Json
+  analysisJson    Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
