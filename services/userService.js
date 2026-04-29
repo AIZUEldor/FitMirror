@@ -90,12 +90,6 @@ const loginUser = async ({ email, password, deviceId, deviceName }) => {
     throw error;
   }
 
-  if (user.authProvider === "GOOGLE") {
-    const error = new Error("Bu account uchun Google login ishlating");
-    error.statusCode = 401;
-    throw error;
-  }
-
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
