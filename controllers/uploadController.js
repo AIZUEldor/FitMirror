@@ -12,7 +12,7 @@ exports.uploadImage = async (req, res, next) => {
       return next(error);
     }
 
-   const { type, sessionId } = req.body;
+   const { type, sessionId, clothSize, fitPreference } = req.body;
     if (!type) {
       const error = new Error("Image type majburiy");
       error.statusCode = 400;
@@ -25,15 +25,16 @@ exports.uploadImage = async (req, res, next) => {
     const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${optimizedFileName}`;
 
     const image = await createImage({
-      userId: req.user.userId,
-      type,
-      sessionId,
-      fileName: optimizedFileName,
-      fileUrl,
-      mimeType: req.file.mimetype,
-      size: req.file.size,
-      
-    });
+  userId: req.user.userId,
+  type,
+  sessionId,
+  fileName: optimizedFileName,
+  fileUrl,
+  mimeType: req.file.mimetype,
+  size: req.file.size,
+  clothSize,
+  fitPreference,
+});
 
     return successResponse(
       res,

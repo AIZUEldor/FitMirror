@@ -8,6 +8,8 @@ const createImage = async ({
   fileUrl,
   mimeType,
   size,
+  clothSize,
+  fitPreference,
 }) => {
   if (!userId || !type || !fileName || !fileUrl) {
     const error = new Error("Image yaratish uchun kerakli maydonlar to'liq emas");
@@ -17,14 +19,16 @@ const createImage = async ({
 
   const image = await prisma.image.create({
     data: {
-      userId,
-      type,
-      sessionId: sessionId || null,
-      fileName,
-      fileUrl,
-      mimeType: mimeType || null,
-      size: size || null,
-    },
+  userId,
+  type,
+  sessionId: sessionId || null,
+  fileName,
+  fileUrl,
+  mimeType: mimeType || null,
+  size: size || null,
+  clothSize: type === "cloth" ? clothSize || null : null,
+  fitPreference: type === "cloth" ? fitPreference || null : null,
+},
   });
 
   return image;
