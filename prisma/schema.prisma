@@ -30,8 +30,8 @@ model User {
 
   images Image[]
 
-  devices  UserDevice[]
-  payments Payment[]
+  devices               UserDevice[]
+  payments              Payment[]
   outfitRecommendations OutfitRecommendation[]
 }
 
@@ -87,13 +87,13 @@ model Payment {
 }
 
 model PaymentWebhookLog {
-  id          String   @id @default(cuid())
-  provider    String
-  paymentId   String?
-  status      String?
-  rawBody     Json
-  processed   Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  provider  String
+  paymentId String?
+  status    String?
+  rawBody   Json
+  processed Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   @@index([provider])
   @@index([paymentId])
@@ -103,7 +103,7 @@ model PaymentWebhookLog {
 model Store {
   id          String   @id @default(cuid())
   name        String
-  type        String   // ONLINE, OFFLINE, HYBRID
+  type        String // ONLINE, OFFLINE, HYBRID
   phone       String?
   address     String?
   websiteUrl  String?
@@ -116,6 +116,7 @@ model Store {
   updatedAt   DateTime @updatedAt
 
   products Product[]
+  ads      Ad[]
 
   @@index([type])
   @@index([isPartner])
@@ -129,11 +130,11 @@ model Product {
   name         String
   description  String?
   brand        String?
-  category     String   // tshirt, shirt, pants, jeans, shoes, cap, accessory
-  gender       String?  // male, female, unisex
+  category     String // tshirt, shirt, pants, jeans, shoes, cap, accessory
+  gender       String? // male, female, unisex
   color        String?
-  style        String?  // casual, classic, sport, streetwear
-  season       String?  // summer, winter, all-season
+  style        String? // casual, classic, sport, streetwear
+  season       String? // summer, winter, all-season
   sizes        String[] @default([])
   tags         String[] @default([])
   price        Decimal? @db.Decimal(10, 2)
@@ -174,4 +175,59 @@ model OutfitRecommendation {
   @@index([userId])
   @@index([imageId])
   @@index([sessionId])
+}
+
+model Ad {
+  id          String    @id @default(cuid())
+  storeId     String?
+  title       String
+  description String?
+  imageUrl    String
+  targetUrl   String?
+  placement   String    @default("GENERATE_WAITING")
+  status      String    @default("ACTIVE")
+  startDate   DateTime?
+  endDate     DateTime?
+  priority    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  store       Store?         @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  impressions AdImpression[]
+  clicks      AdClick[]
+
+  @@index([storeId])
+  @@index([placement])
+  @@index([status])
+  @@index([priority])
+}
+
+model AdImpression {
+  id        String   @id @default(cuid())
+  adId      String
+  userId    String?
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  ad Ad @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@index([adId])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+model AdClick {
+  id        String   @id @default(cuid())
+  adId      String
+  userId    String?
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  ad Ad @relation(fields: [adId], references: [id], onDelete: Cascade)
+
+  @@index([adId])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
 }

@@ -1,6 +1,4 @@
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
+require("dotenv").config();
 console.log("DATABASE_URL =", process.env.DATABASE_URL);
 console.log("NODE_ENV =", process.env.NODE_ENV);
 const userRoutes = require("./routes/userRoutes");
@@ -23,6 +21,7 @@ const provider = "replicate";
 const app = express();
 const PORT = process.env.PORT || 5000;
 const authRoutes = require("./routes/authRoutes");
+const adRoutes = require("./src/modules/ads/adRoutes");
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -43,6 +42,7 @@ app.use("/", homeRoutes);
 app.use("/api", healthRoutes);
 app.use("/api", uploadRoutes);
 app.use("/api", generateRoutes);
+app.use("/api/ads", adRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/generated", express.static("generated"));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

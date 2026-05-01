@@ -1,5 +1,5 @@
 const PLAN_LIMITS = {
-  FREE: 1,
+  FREE: 10,
   PLUS: 10,
   PRO: 20,
   PRIME: 40,

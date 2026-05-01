@@ -5,14 +5,42 @@ const FASHN_API_URL = "https://api.fashn.ai/v1";
 function fileToBase64(filePath) {
   const fileBuffer = fs.readFileSync(filePath);
   const ext = filePath.toLowerCase().endsWith(".png") ? "png" : "jpeg";
+
   return `data:image/${ext};base64,${fileBuffer.toString("base64")}`;
+}
+
+function buildSizeAwarePrompt(clothSize, fitPreference) {
+  const instructions = [];
+
+  if (clothSize) {
+    instructions.push(`The garment size is ${clothSize}.`);
+  }
+
+  if (fitPreference) {
+    instructions.push(`The desired fit preference is ${fitPreference}.`);
+  }
+
+  if (instructions.length === 0) {
+    return "";
+  }
+
+  instructions.push(
+    "Adjust the try-on result so the garment fits the model realistically according to the provided size and fit preference."
+  );
+
+  return instructions.join(" ");
 }
 
 async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function generate({ personImagePath, clothImagePath }) {
+async function generate({
+  personImagePath,
+  clothImagePath,
+  clothSize = null,
+  fitPreference = null,
+}) {
   const apiKey = process.env.FASHN_API_KEY;
 
   if (!apiKey) {
@@ -21,10 +49,11 @@ async function generate({ personImagePath, clothImagePath }) {
 
   const modelImageBase64 = fileToBase64(personImagePath);
   const productImageBase64 = fileToBase64(clothImagePath);
+  const prompt = buildSizeAwarePrompt(clothSize, fitPreference);
 
   const headers = {
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${apiKey}`
+    Authorization: `Bearer ${apiKey}`,
   };
 
   const runResponse = await fetch(`${FASHN_API_URL}/run`, {
@@ -35,17 +64,20 @@ async function generate({ personImagePath, clothImagePath }) {
       inputs: {
         model_image: modelImageBase64,
         product_image: productImageBase64,
+        prompt,
         output_format: "png",
         num_images: 1,
-        resolution: "1k"
-      }
-    })
+        resolution: "1k",
+      },
+    }),
   });
 
   const runData = await runResponse.json();
 
   if (!runResponse.ok) {
-    throw new Error(runData?.error || runData?.message || "FASHN run request xato berdi");
+    throw new Error(
+      runData?.error || runData?.message || "FASHN run request xato berdi"
+    );
   }
 
   if (!runData.id) {
@@ -57,19 +89,28 @@ async function generate({ personImagePath, clothImagePath }) {
   for (let i = 0; i < 40; i++) {
     await sleep(3000);
 
-    const statusResponse = await fetch(`${FASHN_API_URL}/status/${predictionId}`, {
-      method: "GET",
-      headers
-    });
+    const statusResponse = await fetch(
+      `${FASHN_API_URL}/status/${predictionId}`,
+      {
+        method: "GET",
+        headers,
+      }
+    );
 
     const statusData = await statusResponse.json();
 
     if (!statusResponse.ok) {
-      throw new Error(statusData?.error || statusData?.message || "FASHN status request xato berdi");
+      throw new Error(
+        statusData?.error ||
+          statusData?.message ||
+          "FASHN status request xato berdi"
+      );
     }
 
     if (statusData.status === "completed") {
-      const outputUrl = Array.isArray(statusData.output) ? statusData.output[0] : null;
+      const outputUrl = Array.isArray(statusData.output)
+        ? statusData.output[0]
+        : null;
 
       if (!outputUrl) {
         throw new Error("FASHN completed bo‘ldi, lekin output URL topilmadi");
@@ -80,7 +121,12 @@ async function generate({ personImagePath, clothImagePath }) {
         mode: "real-ai",
         provider: "fashn",
         resultImage: outputUrl,
-        resultUrl: outputUrl
+        resultUrl: outputUrl,
+        sizeContext: {
+          clothSize,
+          fitPreference,
+          prompt,
+        },
       };
     }
 
@@ -93,5 +139,5 @@ async function generate({ personImagePath, clothImagePath }) {
 }
 
 module.exports = {
-  generate
+  generate,
 };

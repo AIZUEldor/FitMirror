@@ -165,13 +165,27 @@ clothSourcePath = await resolveImagePath({
   userId: req.user.userId,
 });
 
+let clothSize = null;
+let fitPreference = null;
+
+if (clothImageId) {
+  const clothImage = await getImageById(clothImageId, req.user.userId);
+
+  if (clothImage) {
+    clothSize = clothImage.clothSize;
+    fitPreference = clothImage.fitPreference;
+  }
+}
+
 optimizedPersonPath = await replaceWithOptimizedImage(personSourcePath);
 optimizedClothPath = await replaceWithOptimizedImage(clothSourcePath);
     const sessionId = req.body.sessionId || crypto.randomUUID();
     const result = await generateTryOnImage(
-      optimizedPersonPath,
-      optimizedClothPath
-    );
+  optimizedPersonPath,
+  optimizedClothPath,
+  clothSize,
+  fitPreference
+);
     if (PLAN_LIMITS[user.plan] > 0) {
   await prisma.user.update({
     where: {
