@@ -223,6 +223,7 @@ const createOutfitRecommendation = async ({
 
   return {
     recommendationId: recommendation.id,
+    analysis,
     summary: analysis.summary,
     suggestions: analysis.suggestions,
     categories: analysis.categories,
