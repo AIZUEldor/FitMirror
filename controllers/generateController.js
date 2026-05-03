@@ -10,6 +10,7 @@ const { successResponse } = require("../utils/apiResponse");
 const { createResultImage } = require("../services/imageDbService");
 const { getImageById } = require("../services/imageDbService");
 const { PLAN_LIMITS, CREDIT_PACKS } = require("../config/planLimits");
+const { createOutfitRecommendation } = require("../services/outfitRecommendationService");
 
 function createHttpError(message, statusCode = 500) {
   const error = new Error(message);
@@ -201,7 +202,7 @@ optimizedClothPath = await replaceWithOptimizedImage(clothSourcePath);
 
     const resultFileName = extractFileName(result.resultUrl);
 
-   await createResultImage({
+   const resultImage = await createResultImage({
   userId: req.user.userId,
   sessionId,
   fileName: resultFileName,
@@ -210,11 +211,18 @@ optimizedClothPath = await replaceWithOptimizedImage(clothSourcePath);
   size: null,
 });
 
+const recommendation = await createOutfitRecommendation({
+  userId: req.user.userId,
+  imageId: resultImage.id,
+  sessionId,
+});
+
     const cleanedResult = {
       mode: result.mode,
       resultImage: result.resultImage,
       resultUrl: result.resultUrl,
       note: result.note,
+      recommendation,
     };
 
     return successResponse(
