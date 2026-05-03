@@ -107,8 +107,8 @@ const normalizeTags = (tags) => {
 
 const analyzeImageWithAI = async (imageUrl) => {
   const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-  });
+  model: "gemini-1.5-flash-latest",
+});
 
  const prompt = `
 You are a professional fashion stylist AI.
