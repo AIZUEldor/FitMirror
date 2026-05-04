@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect } = require("../middleware/authMiddleware");
 const paymentWebhookLogController = require("../controllers/paymentWebhookLogController");
 const outfitRecommendationController = require("../controllers/outfitRecommendationController");
+const prisma = require("../src/lib/prisma");
 const {
   getUsers,
   registerUser,
@@ -60,5 +61,25 @@ router.post(
   protect,
   outfitRecommendationController.createRecommendation
 );
+
+router.post("/admin/fix-free-limits", protect, async (req, res) => {
+  const result = await prisma.user.updateMany({
+    where: {
+      plan: "FREE",
+    },
+    data: {
+      monthlyGenerationLimit: 1,
+      monthlyGenerationUsed: 0,
+      planStartedAt: null,
+      planExpiresAt: null,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: "FREE user limits fixed",
+    fixedCount: result.count,
+  });
+});
 
 module.exports = router;
